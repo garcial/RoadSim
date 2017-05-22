@@ -138,7 +138,20 @@ public class CarAgent extends Agent {
 		send(msg);
 		
 		//Runs the agent
-		addBehaviour(new CarBehaviour(this, 50));	
+		try {
+			addBehaviour(new CarBehaviour(this, 50));
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			DFAgentDescription dfdBye = new DFAgentDescription();
+			dfdBye.setName(this.getAID());
+			
+			try {
+				DFService.deregister(this,  dfdBye);
+			} catch (Exception e1) { 
+			}
+
+			this.doDelete();
+		}	
 	}
 	
 	/**

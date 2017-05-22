@@ -26,19 +26,21 @@ public class CarBehaviour extends CyclicBehaviour {
 	private AID topic;
 	private boolean done = false;
 
-	public CarBehaviour(CarAgent a, long timeout) {
+	public CarBehaviour(CarAgent a, long timeout) throws Exception {
 		this.agent = a;
 		
 		this.topic = null;
 		
 		try {
-			TopicManagementHelper topicHelper = (TopicManagementHelper) this.agent.getHelper(TopicManagementHelper.SERVICE_NAME);
+			TopicManagementHelper topicHelper = (TopicManagementHelper) 
+					this.agent.getHelper(TopicManagementHelper.SERVICE_NAME);
 			topic = topicHelper.createTopic("tick");
 			topicHelper.register(topic);
 			
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			throw new Exception("Error instantiating a carBehaviour in agent: "
+		                        + a.getLocalName());
 		}
 	}
 
@@ -67,10 +69,15 @@ public class CarBehaviour extends CyclicBehaviour {
 					this.informSegment(next.getSegment(), "register");
 
 					//Change my speed according to the maximum allowed speed
-					this.agent.setCurrentSpeed(Math.min(this.agent.getMaxSpeed(), this.agent.getPreviousSegment().getCurrentAllowedSpeed()));
+					this.agent.setCurrentSpeed(Math.min(
+							this.agent.getMaxSpeed(), 
+							this.agent.getPreviousSegment().getCurrentAllowedSpeed()));
 					
-					//If we are going under the maximum speed I'm allowed to go, or I can go, I am in a congestion, draw me differently
-					if (this.agent.getCurrentSpeed() < Math.min(this.agent.getMaxSpeed(), this.agent.getPreviousSegment().getMaxSpeed())) {
+					//If we are going under the maximum speed I'm allowed to go, or I can go => 
+					//    I am in a congestion, draw me differently
+					if (this.agent.getCurrentSpeed() < Math.min(
+							                               this.agent.getMaxSpeed(), 
+							                               this.agent.getPreviousSegment().getMaxSpeed())) {
 						
 						this.agent.setSpecialColor(true);
 					} else {
@@ -81,6 +88,7 @@ public class CarBehaviour extends CyclicBehaviour {
 
 				//The proportion of the map is 1px ~= 29m and one tick is one 1 s
 				//Calculate the pixels per tick I have to move
+				// 1/29 = 0.035 pixels x metro; 1/ 3.6 = 0.2778 metros x seg 
 				float increment = ((this.agent.getCurrentSpeed() * 0.2778f) * 0.035f);
 
 				//Virtual position
@@ -88,7 +96,9 @@ public class CarBehaviour extends CyclicBehaviour {
 				float currentY = this.agent.getY();
 
 				//The distance between my current position and my next desired position
-				float distNext = (float) Math.sqrt(Math.pow(currentX - next.getDestinationX(), 2) + Math.pow(currentY - next.getDestinationY(), 2));
+				float distNext = (float) Math.sqrt(
+						 Math.pow(currentX - next.getDestinationX(), 2) + 
+						 Math.pow(currentY - next.getDestinationY(), 2));
 
 				//Check if we need to go to the next step
 				while (increment > distNext) {
@@ -105,13 +115,15 @@ public class CarBehaviour extends CyclicBehaviour {
 						currentX = next.getOriginX();
 						currentY = next.getOriginY();
 
-						distNext = (float) Math.sqrt(Math.pow(currentX - next.getDestinationX(), 2) + Math.pow(currentY - next.getDestinationY(), 2));
+						distNext = (float) Math.sqrt(
+								Math.pow(currentX - next.getDestinationX(), 2) + 
+								Math.pow(currentY - next.getDestinationY(), 2));
 					} else {
-
+						// Ya he alcanzado mi destino
 						this.kill();
 						break;
 					}
-				}
+				} // endwhile
 
 				if (!this.done) {
 					
@@ -141,10 +153,15 @@ public class CarBehaviour extends CyclicBehaviour {
 					}
 					
 					//Change my speed according to the maximum allowed speed
-					this.agent.setCurrentSpeed(Math.min(this.agent.getMaxSpeed(), this.agent.getPreviousSegment().getCurrentAllowedSpeed()));
+					this.agent.setCurrentSpeed(Math.min(
+							      this.agent.getMaxSpeed(), 
+							      this.agent.getPreviousSegment().getCurrentAllowedSpeed()));
 					
-					//If we are going under the maximum speed I'm allowed to go, or I can go, I am in a congestion, draw me differently
-					if (this.agent.getCurrentSpeed() < Math.min(this.agent.getMaxSpeed(), this.agent.getPreviousSegment().getMaxSpeed())) {
+					//If we are going under the maximum speed I'm allowed to go, or I can go => 
+					//    I am in a congestion, draw me differently
+					if (this.agent.getCurrentSpeed() < Math.min(
+							                   this.agent.getMaxSpeed(), 
+							                   this.agent.getPreviousSegment().getMaxSpeed())) {
 						
 						this.agent.setSpecialColor(true);
 					} else {
@@ -165,7 +182,8 @@ public class CarBehaviour extends CyclicBehaviour {
 		msg.setOntology("carToSegmentOntology");
 		msg.setConversationId(type);
 		msg.addReceiver(segment.getSegmentAgent().getAID());
-		msg.setContent(this.agent.getId() + "#" + Float.toString(this.agent.getX()) + "#" + Float.toString(this.agent.getY()) + "#" + this.agent.getSpecialColor() + "#");
+		msg.setContent(this.agent.getId() + "#" + Float.toString(this.agent.getX()) + "#" + 
+		               Float.toString(this.agent.getY()) + "#" + this.agent.getSpecialColor() + "#");
 
 		myAgent.send(msg);
 	}
